@@ -6,37 +6,34 @@ variable "vcenter_username" {
 }
 variable "vcenter_password" {
     description = "Password to authenticate to vCenter"
-    default     = ""
 }
 variable "vcenter_cluster" {}
 variable "vcenter_datacenter" {}
-variable "vcenter_host" {}
 variable "vcenter_datastore" {}
 variable "vcenter_folder" {
     description = "The vcenter folder to store the template"
 }
 variable "connection_username" {
-    default = "vagrant"
+    default = "ansible"
 }
 variable "connection_password" {
-    default = "vagrant"
+    default = "ansible"
 }
 variable "vm_hardware_version" {
     default = "13"
 }
 variable "iso_checksum" {}
 variable "os_version" {}
-variable "os_iso_path" {}
 variable "guest_os_type" {}
 variable "root_disk_size" {
-    default = 48000
+    default = 16384
 }
 variable "nic_type" {
     default = "vmxnet3"
 }
 variable "vm_network" { }
 variable "num_cpu" {
-    default = 4
+    default = 2
 }
 variable "num_cores" {
     default = 1
@@ -52,4 +49,3 @@ variable "os_iso_url" {
     description = "The download url for the ISO"
     default = ""
 }
-variable "boot_command" {} #TODO: Figure out a better way to handle this

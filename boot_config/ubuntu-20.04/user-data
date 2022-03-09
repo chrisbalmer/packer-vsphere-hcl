@@ -1,12 +1,12 @@
+#cloud-config
 autoinstall:
   version: 1
   early-commands:
     - systemctl stop ssh # otherwise packer tries to connect and exceed max attempts
   identity:
     hostname: packer-ubuntu
-    username: vagrant
-    # `vagrant`, but hashed
-    password: '$6$xzsJvkg10l$/MR33d6N0hKXj23Mlb7xustF5i2TzA1iQt9gErJysQxnANBHUyeUdyc.paED1gB0tIx5XPG2Zic4BLygr1Z2a/'
+    username: ansible
+    password: '$6$rounds=4096$ex25Iv6XEaz8ml$27LywG4GO7gT1978HqXxB.fvoIccEw9MwR9xewelYDUJBF/n3p..D7mhMfmoAVnbGmzus.SDgkjCnzfbLyH9h1'
   locale: en_US
   keyboard:
     layout: en
@@ -15,12 +15,36 @@ autoinstall:
     network:
       version: 2
       ethernets:
-        ens190: {dhcp4: true, dhcp-identifier: mac}
+        ens192: 
+          dhcp4: true
   ssh:
-    install-server: true
+    install-server: yes
+    allow-pw: yes
+    authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4tyVPpXVFUXaf0UqsrZM+QVEqPmItqHJx9n5G9+VFO5/wDE4SbUzlh6yV881+91oKdoJ0xUoD4RXTuJRjBeNyZtQJUOC+wlUJDoiR5af5WJ6yoqTSMrqyrjD74wtYdTgOldIN7SNn0G+S/5dPgJe+lIt5CQpmP71oBVCb1WIdNsdm9lUgnZdi87JS745RVZmVu+szCS40DcLhVOja3FXpZ7wjG2Hpv6XhD6Uo7cRbRgf5zYBcCSZ2I5CogD21tCz5HqZGF9nvtvtDQVnwA9cbrNxjP5HqE7pK0FLDdpSvDyWL1uGbMbC0agalxLB0NP7y//AGf1Tgx+QgsS0gtdeN
   packages:
     - open-vm-tools
+    - openssh-server
+    - net-tools
     - perl
+    - open-iscsi
+    - ntp
+    - curl
+    - vim
+    - ifupdown
+    - zip
+    - unzip
+    - gnupg2
+    - software-properties-common
+    - apt-transport-https
+    - ca-certificates
+    - lsb-release
+    - python3
+    - python3-pip
+    - jq
+  storage:
+    layout:
+      name: lvm
   late-commands:
-    - sed -i 's/^#*\(send dhcp-client-identifier\).*$/\1 = hardware;/' /target/etc/dhcp/dhclient.conf
-    - 'sed -i "s/dhcp4: true/&\n      dhcp-identifier: mac/" /target/etc/netplan/00-installer-config.yaml'
+    - echo 'ansible ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ansible
+    - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/ansible
