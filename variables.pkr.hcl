@@ -14,13 +14,13 @@ variable "vcenter_folder" {
     description = "The vcenter folder to store the template"
 }
 variable "connection_username" {
-    default = "ansible"
+    default = "packer"
 }
 variable "connection_password" {
-    default = "ansible"
+    default = "packer"
 }
 variable "vm_hardware_version" {
-    default = "13"
+    default = "18"
 }
 variable "iso_checksum" {}
 variable "os_version" {}
@@ -49,3 +49,12 @@ variable "os_iso_url" {
     description = "The download url for the ISO"
     default = ""
 }
+
+variable "vm_firmware" {
+  type        = string
+  description = "The virtual machine firmware. (e.g. 'efi-secure'. 'efi', or 'bios')"
+  default     = "efi"
+}
+
+variable "build_key" {}
+variable "build_username" {}

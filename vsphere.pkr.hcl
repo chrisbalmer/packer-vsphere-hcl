@@ -3,7 +3,7 @@ source "vsphere-iso" "ubuntu" {
   vcenter_server      = var.vcenter_server
   username            = var.vcenter_username
   password            = var.vcenter_password
-  insecure_connection = true #TODO: Add ca to docker
+  insecure_connection = true
   cluster             = var.vcenter_cluster
   datacenter          = var.vcenter_datacenter
   datastore           = var.vcenter_datastore
@@ -11,6 +11,8 @@ source "vsphere-iso" "ubuntu" {
   folder              = var.vcenter_folder
 
   # VM Settings
+  vm_name               = "${ var.os_family }-${ var.os_version }-{{ isotime \"2006-01-02\" }}"
+  firmware              = var.vm_firmware
   ip_wait_timeout       = "45m"
   ssh_username          = var.connection_username
   ssh_password          = var.connection_password
@@ -19,14 +21,9 @@ source "vsphere-iso" "ubuntu" {
   ssh_handshake_attempts = "20"
   shutdown_timeout      = "15m"
   vm_version            = var.vm_hardware_version
-  iso_url             = var.os_iso_url
+  iso_url               = var.os_iso_url
   iso_checksum          = var.iso_checksum
-  cd_files = [
-    "./boot_config/ubuntu-20.04/meta-data",
-    "./boot_config/ubuntu-20.04/user-data"
-  ]
-  cd_label = "cidata"
-  vm_name               = "${ var.os_family }-${ var.os_version }-{{ isotime \"2006-01-02\" }}"
+
   guest_os_type         = var.guest_os_type
   disk_controller_type  = ["pvscsi"]
   network_adapters {
@@ -42,28 +39,44 @@ source "vsphere-iso" "ubuntu" {
   CPU_hot_plug          = true
   RAM                   = var.vm_ram
   RAM_hot_plug          = true
+
+  # cloud-init configuration
+  # When using the CDROM for the cloud-init files, it must be named 'cidata'
+  # and to continue the autoinstall automatically the boot command needs 'autoinstall' added
+  # https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html
+  cd_files = [
+    "./boot_config/ubuntu-20.04/meta-data",
+    "./boot_config/ubuntu-20.04/user-data"
+  ]
+  cd_label = "cidata"
   boot_wait             = "5s"
   boot_command = [
-    "<esc><esc><esc>",
+    "<esc><wait>",
+    "linux /casper/vmlinuz --- autoinstall ds\"=nocloud\"",
     "<enter><wait>",
-    "/casper/vmlinuz ",
-    "initrd=/casper/initrd ",
-    "autoinstall ",
+    "initrd /casper/initrd",
+    "<enter><wait>",
+    "boot",
     "<enter>"
   ]
 }
 
 build {
-    sources = [
-        "source.vsphere-iso.ubuntu",
+  sources = [
+      "source.vsphere-iso.ubuntu",
+  ]
+  provisioner "ansible" {
+    playbook_file = "${path.cwd}/ansible/main.yml"
+    roles_path    = "${path.cwd}/ansible/roles"
+    ansible_env_vars = [
+      "ANSIBLE_CONFIG=${path.cwd}/ansible/ansible.cfg"
     ]
-    provisioner "shell" {
-      execute_command = "echo '${var.connection_password}' | {{.Vars}} sudo -S -E sh -eux '{{.Path}}'" # This runs the scripts with sudo
-      scripts = [
-          "scripts/apt.sh",
-          "scripts/cleanup.sh",
-          "scripts/ubuntu-prep.sh",
-          "scripts/clean-ssh-hostkeys.sh"
-      ]
-    }
+    extra_arguments = [
+      "--extra-vars", "display_skipped_hosts=false",
+      "--extra-vars", "BUILD_USERNAME=${var.build_username}",
+      "--extra-vars", "BUILD_SECRET='${var.build_key}'",
+      "--extra-vars", "ANSIBLE_USERNAME=${var.build_username}",
+      "--extra-vars", "ANSIBLE_SECRET='${var.build_key}'",
+    ]
+  }
 }
